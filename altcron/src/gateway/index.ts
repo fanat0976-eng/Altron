@@ -2,6 +2,7 @@ import express from "express";
 import { WebSocketServer, WebSocket } from "ws";
 import { createServer, type Server } from "http";
 import { randomUUID } from "crypto";
+import { validateToken } from "../auth/index.js";
 
 export interface WSClient {
   ws: WebSocket;
@@ -73,7 +74,16 @@ export class Gateway {
   }
 
   private setupWebSocket(): void {
-    this.wss.on("connection", (ws) => {
+    this.wss.on("connection", (ws, req) => {
+      const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      const token = url.searchParams.get("token") || undefined;
+
+      if (!validateToken(token)) {
+        console.warn(`[WS] Unauthorized connection attempt`);
+        ws.close(4001, "Unauthorized");
+        return;
+      }
+
       const clientId = randomUUID();
       this.clients.set(clientId, { ws });
       console.log(`[WS] Client connected: ${clientId}`);

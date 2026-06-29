@@ -16,6 +16,7 @@ import { browserTools } from "./extensions/browser-tool/index.js";
 import { Retriever } from "./rag/retriever/index.js";
 import { SkillRegistry } from "./skills/registry/index.js";
 import { MCPServer } from "./mcp/server/index.js";
+import { loadOrCreateToken, validateToken, getAuthInfo, generateQRBuffer, printQRToConsole, getServerUrl } from "./auth/index.js";
 
 const sessionManager = new SessionManager();
 const llm = new LLMClient();
@@ -40,11 +41,34 @@ function asyncHandler(fn: AsyncHandler) {
 }
 
 function setupRoutes(app: express.Application): void {
-  app.use(cors({ origin: ["http://localhost:1420", "http://127.0.0.1:1420"] }));
+  app.use(cors({ origin: true, credentials: true }));
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", version: "0.1.0", uptime: process.uptime() });
+  });
+
+  app.get("/api/auth/info", (_req, res) => {
+    const port = getConfig().server.port;
+    res.json(getAuthInfo(port));
+  });
+
+  app.get("/api/auth/qr", asyncHandler(async (_req, res) => {
+    const port = getConfig().server.port;
+    const url = `${getServerUrl(port)}?token=${getAuthToken()}`;
+    const buf = await generateQRBuffer(url);
+    res.setHeader("Content-Type", "image/png");
+    res.send(buf);
+  }));
+
+  app.use("/api", (req, res, next) => {
+    if (req.path.startsWith("/auth")) return next();
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
+    if (!validateToken(token)) {
+      return res.status(401).json({ error: "Unauthorized. Provide Authorization: Bearer <token>" });
+    }
+    next();
   });
 
   app.get("/api/sessions", asyncHandler(async (_req, res) => {
@@ -529,6 +553,7 @@ async function handleWSMessage(clientId: string, msg: any, gateway: Gateway): Pr
 async function main(): Promise<void> {
   loadConfig();
   loadSettings();
+  loadOrCreateToken();
   const config = getConfig();
 
   getDatabase();
@@ -607,6 +632,7 @@ Always explain your reasoning before taking actions.`,
 
   await gateway.listen(config.server.port, config.server.host);
 
+  const authInfo = getAuthInfo(config.server.port);
   console.log(`
 ╔══════════════════════════════════════════════════╗
 ║             АЛЬТРОН v0.1.0                       ║
@@ -617,8 +643,11 @@ Always explain your reasoning before taking actions.`,
 ║  DB:      ${config.database.path.padEnd(37)}║
 ║  Tools:   ${String(toolRegistry.list().length).padEnd(37)}║
 ║  Plugins: ${String(pluginRegistry.list().length).padEnd(37)}║
+║  Auth:    ${authInfo.token.slice(0, 8)}...${authInfo.token.slice(-4).padEnd(29)}║
 ╚══════════════════════════════════════════════════╝
   `);
+
+  await printQRToConsole(authInfo.connectUrl);
 
   process.on("SIGINT", async () => {
     console.log("\n[Altchron] Shutting down...");
