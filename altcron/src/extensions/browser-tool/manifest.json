@@ -1,0 +1,7 @@
+{
+  "name": "browser-tool",
+  "version": "0.1.0",
+  "description": "Web tools: open URL, fetch URL, web search",
+  "author": "Altchron",
+  "tools": ["open_url", "fetch_url", "search_web"]
+}

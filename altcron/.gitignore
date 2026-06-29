@@ -1,0 +1,16 @@
+node_modules/
+dist/
+data/
+.env
+*.db
+*.db-shm
+*.db-wal
+*.log
+test.txt
+test-*.txt
+test-skills/
+test-skills-registry/
+test-rag-docs/
+test-agent-integration/
+altron-tests/
+settings.json

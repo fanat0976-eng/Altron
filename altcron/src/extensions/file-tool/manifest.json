@@ -1,0 +1,7 @@
+{
+  "name": "file-tool",
+  "version": "0.1.0",
+  "description": "File operations: read, write, edit, list, delete, move, info",
+  "author": "Altchron",
+  "tools": ["read_file", "write_file", "edit_file", "list_dir", "delete_file", "move_file", "file_info"]
+}

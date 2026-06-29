@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Runtime data
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Environment secrets
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Temp files
+test.txt
+test-*.txt
+*.apk
+*.aab
+
+# Build workarounds
+altron_build/

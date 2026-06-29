@@ -1,0 +1,7 @@
+{
+  "name": "system-tool",
+  "version": "0.1.0",
+  "description": "System tools: bash, process list, environment",
+  "author": "Altchron",
+  "tools": ["bash", "process_list", "env_get"]
+}

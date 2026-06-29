@@ -1,0 +1,20 @@
+[package]
+name = "altron"
+version = "0.1.0"
+description = "Альтрон AI Gateway"
+authors = ["Altron"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+[lib]
+name = "altron_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.5", features = ["shell-open", "shell-execute", "fs-read-file", "fs-write-file", "fs-read-dir", "fs-create-dir", "fs-remove-file", "fs-rename-file", "path-all", "window-all", "system-tray"] }
