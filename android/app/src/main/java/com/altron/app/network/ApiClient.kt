@@ -12,7 +12,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 
-class ApiClient(private var baseUrl: String) {
+class ApiClient(private var baseUrl: String, private val token: String? = null) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -22,6 +22,11 @@ class ApiClient(private var baseUrl: String) {
     private val mediaType = "application/json; charset=utf-8".toMediaType()
 
     fun updateUrl(url: String) { baseUrl = url }
+
+    private fun Request.Builder.authHeader(): Request.Builder {
+        token?.let { addHeader("Authorization", "Bearer $it") }
+        return this
+    }
 
     suspend fun health(): ServerHealth = get("/health")
 
@@ -39,7 +44,7 @@ class ApiClient(private var baseUrl: String) {
     suspend fun getTools(): List<ToolDef> = get("/api/tools")
 
     private suspend inline fun <reified T> get(path: String): T = withContext(Dispatchers.IO) {
-        val request = Request.Builder().url("http://$baseUrl$path").get().build()
+        val request = Request.Builder().url("http://$baseUrl$path").get().authHeader().build()
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) throw Exception("HTTP ${response.code}")
         json.decodeFromString<T>(response.body!!.string())
@@ -49,6 +54,7 @@ class ApiClient(private var baseUrl: String) {
         val request = Request.Builder()
             .url("http://$baseUrl$path")
             .post(body.toRequestBody(mediaType))
+            .authHeader()
             .build()
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) throw Exception("HTTP ${response.code}")
@@ -56,7 +62,7 @@ class ApiClient(private var baseUrl: String) {
     }
 
     private suspend fun delete(path: String): Unit = withContext(Dispatchers.IO) {
-        val request = Request.Builder().url("http://$baseUrl$path").delete().build()
+        val request = Request.Builder().url("http://$baseUrl$path").delete().authHeader().build()
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) throw Exception("HTTP ${response.code}")
     }

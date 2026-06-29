@@ -18,6 +18,9 @@ class ConnectionViewModel : ViewModel() {
     private val _serverUrl = MutableStateFlow("")
     val serverUrl: StateFlow<String> = _serverUrl
 
+    private val _token = MutableStateFlow<String?>(null)
+    val token: StateFlow<String?> = _token
+
     private val _status = MutableStateFlow<ConnectionStatus>(ConnectionStatus.Disconnected)
     val status: StateFlow<ConnectionStatus> = _status
 
@@ -32,15 +35,16 @@ class ConnectionViewModel : ViewModel() {
         }
     }
 
-    fun connect(url: String) {
+    fun connect(url: String, token: String? = null) {
         _serverUrl.value = url
+        _token.value = token
         _status.value = ConnectionStatus.Connecting
         viewModelScope.launch {
             try {
-                val client = ApiClient(url)
+                val client = ApiClient(url, token)
                 client.health()
                 apiClient = client
-                wsClient.connect("ws://$url/ws")
+                wsClient.connect("ws://$url/ws", token)
             } catch (e: Exception) {
                 _status.value = ConnectionStatus.Disconnected
                 _error.value = e.message ?: "Connection failed"

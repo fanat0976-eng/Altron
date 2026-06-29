@@ -36,9 +36,10 @@ class WsClient {
     private val _messages = MutableSharedFlow<WsIncoming>(extraBufferCapacity = 64)
     val messages: SharedFlow<WsIncoming> = _messages
 
-    fun connect(url: String) {
+    fun connect(url: String, token: String? = null) {
         intentionalClose = false
-        val request = Request.Builder().url(url).build()
+        val wsUrl = if (token != null) "$url?token=$token" else url
+        val request = Request.Builder().url(wsUrl).build()
         ws = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 _connected.value = true

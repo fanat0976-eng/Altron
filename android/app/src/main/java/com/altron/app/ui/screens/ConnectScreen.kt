@@ -47,6 +47,7 @@ fun ConnectScreen(
     onConnected: () -> Unit,
 ) {
     var address by remember { mutableStateOf("10.0.2.2:3000") }
+    var token by remember { mutableStateOf("") }
     val status by viewModel.status.collectAsState()
     val error by viewModel.error.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -109,6 +110,32 @@ fun ConnectScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = token,
+            onValueChange = { token = it },
+            label = { Text("Токен (опционально)", color = TextSecondary) },
+            placeholder = { Text("Из QR кода или консоли сервера", color = TextMuted) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    viewModel.connect(address, token.ifBlank { null })
+                },
+            ),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Primary,
+                unfocusedBorderColor = Border,
+                cursorColor = Primary,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
         if (error != null) {
             Text(
                 text = error ?: "",
@@ -123,7 +150,7 @@ fun ConnectScreen(
         Button(
             onClick = {
                 focusManager.clearFocus()
-                viewModel.connect(address)
+                viewModel.connect(address, token.ifBlank { null })
             },
             enabled = status !is ConnectionViewModel.ConnectionStatus.Connecting && address.isNotBlank(),
             colors = ButtonDefaults.buttonColors(containerColor = Primary),
